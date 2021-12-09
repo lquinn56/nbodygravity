@@ -1,0 +1,94 @@
+%matplotlib inline
+import matplotlib.pyplot as plt
+import numpy
+#PUT YOUR DATA IN THESE ARRAYS IF IMPORTING USING PANDAS MAKE SURE THEY'RE KEPT AS ARRAY
+x_values = numpy.array([0, 15, 30, 45, 60])
+y_values = numpy.array([70, 77, 83, 90, 100])
+y_errors = numpy.array([0.8, 0.7, 1.2, 1.1, 1.2])
+#AFTER THIS POINT NO MORE 
+assert len(y_values) == len(x_values)
+assert len(y_errors) == len(y_values)
+plt.figure(figsize=(8,6))
+plt.errorbar(x_values, 
+             y_values, 
+             yerr=y_errors, 
+             marker='o', 
+             linestyle='None')
+
+plt.xlabel('x data (units)') # Axis labels
+plt.ylabel('y data (units)')
+plt.show()
+Generated plot of the example data with error-bars.
+def linear_model(x, param_vals):
+    return param_vals[0] + param_vals[1]*x
+def quadratic_model(x, param_vals):
+    return param_vals[0] + param_vals[1]*x**2
+def chi_squared(model_params, model, x_data, y_data, y_error):
+    return numpy.sum(((y_data - model(x_data, model_params))/y_error)**2)
+model_function = quadratic_model # Note the absence of (), as we are not actually calling the finction at this point.
+
+initial_values = numpy.array([0.0, 1.0]) # Initial guess for fit parameters
+deg_freedom = x_values.size - initial_values.size # Make sure you understand why!
+print('DoF = {}'.format(deg_freedom))
+DoF = 3
+import scipy.optimize
+
+fit_quadratic = scipy.optimize.minimize(chi_squared, initial_values, args=(model_function, x_values, y_values, y_errors))
+
+print(fit_quadratic.success) # Did the minimisation complete successfully?
+print(fit_quadratic.message) # Additional termination output information
+True
+Optimization terminated successfully.
+a_solution = fit_quadratic.x[0]
+b_solution = fit_quadratic.x[1]
+
+print('best linear fit a = {} a_units?'.format(a_solution))
+print('best linear fit b = {} b_units?'.format(b_solution))
+print('minimised chi-squared = {}'.format(fit_quadratic.fun))
+
+# Take a moment at this point to think about significant figures...
+best linear fit a = 73.35649109936377 a_units?
+best linear fit b = 0.00782570446815179 b_units?
+minimised chi-squared = 31.680773599248568
+chisq_min = chi_squared([a_solution, b_solution], model_function, x_values, y_values, y_errors)
+print('chi^2_min = {}'.format(chisq_min))
+chi^2_min = 31.680773599248568
+chisq_reduced = chisq_min/deg_freedom
+print('reduced chi^2 = {}'.format(chisq_reduced))
+reduced chi^2 = 10.560257866416189
+import scipy.stats
+
+P_value = scipy.stats.chi2.sf(chisq_min, deg_freedom)
+print('P(chi^2_min, DoF) = {}'.format(P_value))
+P(chi^2_min, DoF) = 6.110219731787744e-07
+plt.figure(figsize=(8,6))
+plt.errorbar(x_values, 
+             y_values, 
+             yerr=y_errors, 
+             marker='o', 
+             linestyle='None')
+
+plt.xlabel('x data (units)') # Axis labels
+plt.ylabel('y data (units)')
+
+# Generate best fit line using model function and best fit parameters, and add to plot
+fit_line = model_function(x_values, [a_solution, b_solution])
+plt.plot(x_values, fit_line, 'r')
+plt.show()
+Generated plot of the example data with error-bars, showing a best-fitting quadratic model.
+smooth_xvals = numpy.linspace(min(x_values), max(x_values), 1000)   
+# make a smoother line - use 1000 equally spaced points over the range of the measured points.
+
+plt.figure(figsize=(8,6))
+plt.errorbar(x_values, 
+             y_values, 
+             yerr=y_errors, 
+             marker='o', 
+             linestyle='None')
+
+plt.xlabel('x data (units)')
+plt.ylabel('y data (units)')
+
+simulated_line = model_function(smooth_xvals, [a_solution, b_solution]) 
+plt.plot(smooth_xvals, simulated_line, 'r')
+plt.show()
